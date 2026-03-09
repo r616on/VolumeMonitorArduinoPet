@@ -7,6 +7,10 @@
 #define MCP4561_CMD_WRITE_WIPER0 0x00
 #define MCP4561_CMD_WRITE_NV_WIPER0 0x20
 
+#define BUTTON_PIN 9  // пин оптопары
+unsigned long pressStartTime = 0;
+bool buttonActive = false;
+
 #define POT_MAX_VALUE 255  // Максимальное значение потенциометра (0-255)
 
 // --- Символы обрамления сообщений ---
@@ -134,6 +138,19 @@ void parseCommand(String jsonString) {
       sendResponse(errorDoc);
     }
   }
+  else if (strcmp(command, "press_button") == 0) {
+  // Запуск имитации нажатия
+  digitalWrite(BUTTON_PIN, HIGH);
+  pressStartTime = millis();
+  buttonActive = true;
+
+  // Формирование ответа
+  StaticJsonDocument<128> responseDoc;
+  responseDoc["status"] = "success";
+  responseDoc["command"] = "press_button";
+  responseDoc["message"] = "Button press simulated (500ms)";
+  sendResponse(responseDoc);
+}
 
   else if (strcmp(command, "ping") == 0) {
     StaticJsonDocument<128> responseDoc;
@@ -156,6 +173,8 @@ void parseCommand(String jsonString) {
 void setup() {
   Serial.begin(115200);
   Wire.begin();
+  pinMode(BUTTON_PIN, OUTPUT);
+  digitalWrite(BUTTON_PIN, LOW);
 
   delay(100);
 
@@ -193,5 +212,9 @@ void loop() {
       errorDoc["message"] = "Message must be enclosed in [ ]";
       sendResponse(errorDoc);
     }
+  }
+  if (buttonActive && (millis() - pressStartTime >= 500)) {
+    digitalWrite(BUTTON_PIN, LOW);
+    buttonActive = false;
   }
 }
