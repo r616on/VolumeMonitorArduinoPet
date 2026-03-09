@@ -40,18 +40,21 @@ bool setPotValue(uint8_t deviceAddr, int value) {
 }
 
 bool setPotValueMemory(uint8_t deviceAddr, int value) {
-  // Ограничиваем значение от 0 до 255
+  // Ограничение значения
   if (value < 0) value = 0;
   if (value > POT_MAX_VALUE) value = POT_MAX_VALUE;
 
+  // Запись в волатильный регистр
   Wire.beginTransmission(deviceAddr);
   Wire.write(MCP4561_CMD_WRITE_WIPER0);
   Wire.write((uint8_t)value);
+  if (Wire.endTransmission() != 0) return false;
+
+  // Запись в энергонезависимый регистр
+  Wire.beginTransmission(deviceAddr);
   Wire.write(MCP4561_CMD_WRITE_NV_WIPER0);
   Wire.write((uint8_t)value);
-  byte error = Wire.endTransmission();
-
-  return (error == 0);
+  return (Wire.endTransmission() == 0);
 }
 
 // --- Функция установки громкости (прямая запись значения 0-255) ---
@@ -191,6 +194,4 @@ void loop() {
       sendResponse(errorDoc);
     }
   }
-
-  delay(10);
 }
