@@ -12,7 +12,7 @@ bool buttonActive = false;
 PresetDetector presetDetector(A3);
 
 // Для отслеживания изменений подтверждённого пресета
-int lastConfirmedPreset = 0;
+int lastConfirmedPreset = 1;
 
 #define POT_MAX_VALUE 255  // Максимальное значение потенциометра (0-255)
 
@@ -78,7 +78,7 @@ void parseCommand(String jsonString) {
       StaticJsonDocument<128> responseDoc;
       if (success) {
         responseDoc["status"] = "success";
-         responseDoc["command"] = "set_bass_level";
+        responseDoc["command"] = "set_bass_level";
         responseDoc["value"] = value;
       } else {
         responseDoc["status"] = "error";
@@ -106,6 +106,14 @@ void parseCommand(String jsonString) {
     responseDoc["command"] = "change_preset";
     responseDoc["message"] = "Button press simulated (500ms)";
     sendResponse(responseDoc);
+  }
+
+  else if (strcmp(command, "get_preset") == 0) {
+    // Формирование ответа
+    StaticJsonDocument<128> eventDoc;
+    eventDoc["command"] = "preset_changed";
+    eventDoc["value"] = lastConfirmedPreset;
+    sendResponse(eventDoc);
   }
 
   else if (strcmp(command, "ping") == 0) {
@@ -161,17 +169,16 @@ void loop() {
     buttonActive = false;
   }
 
+
   // 2. Обновление детектора пресета
   presetDetector.update();
-
   // 3. Проверка, изменился ли подтверждённый пресет
   int currentPreset = presetDetector.getConfirmedPreset();
   if (currentPreset != lastConfirmedPreset && currentPreset != 0) {
-    // Создаём JSON-документ с событием
     StaticJsonDocument<128> eventDoc;
     eventDoc["command"] = "preset_changed";
     eventDoc["value"] = currentPreset;
-    sendResponse(eventDoc);  // отправляем с обрамлением []
+    sendResponse(eventDoc);
 
     lastConfirmedPreset = currentPreset;
   }

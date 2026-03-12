@@ -5,45 +5,48 @@
 
 class PresetDetector {
 public:
-    // Конструктор: принимает пин, к которому подключена оптопара
-    PresetDetector(uint8_t pin);
+  // Геттеры для отладки
+  int getCurrentSeriesCount() const { return _currentSeriesCount; }
+  int getState() const { return _state; }
+  unsigned long getLastPulseEnd() const { return _lastPulseEnd; }
 
-    // Должен вызываться в loop(), обрабатывает логику детектирования
-    void update();
+  // Конструктор: принимает пин, к которому подключена оптопара
+  PresetDetector(uint8_t pin);
 
-    // Возвращает последний подтверждённый номер пресета (0, если не подтверждён)
-    int getConfirmedPreset() const;
+  // Должен вызываться в loop(), обрабатывает логику детектирования
+  void update();
 
-    // Сброс состояния детектора
-    void reset();
+  // Возвращает последний подтверждённый номер пресета (0, если не подтверждён)
+  int getConfirmedPreset() const;
 
-    // Настройка параметров (можно вызывать до начала работы)
-    void setPulseRange(unsigned long minDur, unsigned long maxDur);
-    void setTimeout(unsigned long seriesTimeout);
+  // Сброс состояния детектора
+  void reset();
+
+  // Настройка параметров
+  void setPulseRange(unsigned long minDur, unsigned long maxDur);
+  void setTimeout(unsigned long seriesTimeout);
 
 private:
-    uint8_t _pin;               // пин для чтения
-    unsigned long _minPulseDur;
-    unsigned long _maxPulseDur;
-    unsigned long _seriesTimeout;
+  uint8_t _pin;
+  unsigned long _minPulseDur;
+  unsigned long _maxPulseDur;
+  unsigned long _seriesTimeout;
 
-    // Состояние конечного автомата
-    enum State { IDLE, IN_SERIES } _state;
+  // Состояние конечного автомата
+  enum State { IDLE, IN_SERIES } _state;
 
-    // Переменные для измерения импульсов
-    int _prevLevel;
-    bool _pulseActive;
-    unsigned long _pulseStart;
-    unsigned long _lastPulseEnd;
+  // Переменные для измерения импульсов
+  int _prevLevel;
+  bool _pulseActive;
+  unsigned long _pulseStart;
+  unsigned long _lastPulseEnd;
 
-    // Счётчики серий
-    int _currentSeriesCount;
-    int _lastSeriesCount;
-    int _consecutiveMatches;
-    int _confirmedPreset;
+  // Счётчики серий
+  int _currentSeriesCount;
+  int _confirmedPreset;  // теперь подтверждается сразу
 
-    // Вспомогательный метод для завершения серии
-    void _endSeries();
+  // Вспомогательный метод для завершения серии
+  void _endSeries();
 };
 
 #endif
